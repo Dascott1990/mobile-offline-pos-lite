@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New Sale - MobilePOS Lite</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="css/style.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-4">
+        <!-- Online/Offline Banner -->
+        <div id="connectionStatus" class="alert alert-warning d-none" role="alert">
+            <i class="fas fa-wifi"></i> You are currently offline. Transactions will be saved locally.
+        </div>
+
+        <!-- Header -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1><i class="fas fa-cash-register text-primary"></i> New Sale</h1>
+            <a href="index.html" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left"></i> Back to Dashboard
+            </a>
+        </div>
+
+        <!-- Sale Form -->
+        <div class="row justify-content-center">
+            <div class="col-md-8 col-lg-6">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="card-title mb-0">Sale Information</h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="saleForm">
+                            <div class="mb-3">
+                                <label for="productName" class="form-label">Product Name *</label>
+                                <input type="text" class="form-control" id="productName" required
+                                       placeholder="Enter product name">
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="amount" class="form-label">Unit Price ($) *</label>
+                                        <input type="number" class="form-control" id="amount" 
+                                               step="0.01" min="0.01" required placeholder="0.00">
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="quantity" class="form-label">Quantity *</label>
+                                        <input type="number" class="form-control" id="quantity" 
+                                               min="1" value="1" required>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="paymentType" class="form-label">Payment Method *</label>
+                                <select class="form-select" id="paymentType" required>
+                                    <option value="">Select payment method</option>
+                                    <option value="cash">Cash</option>
+                                    <option value="card">Credit/Debit Card</option>
+                                    <option value="mobile">Mobile Payment</option>
+                                    <option value="wavepay">WavePay Quantum (Offline)</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+
+                            <!-- Add WavePay section (hidden by default) -->
+                            <div id="wavepaySection" class="mt-3 p-3 border rounded d-none">
+                                <h6><i class="fas fa-satellite-dish"></i> WavePay Quantum Payment</h6>
+                                <div class="mb-2">
+                                    <label class="form-label">Buyer Wallet ID:</label>
+                                    <input type="text" class="form-control" id="buyerWalletId" 
+                                           placeholder="Enter buyer's WavePay wallet ID">
+                                </div>
+                                <button type="button" class="btn btn-outline-primary btn-sm" onclick="generateWavePayQR()">
+                                    <i class="fas fa-qrcode"></i> Generate Payment QR
+                                </button>
+                                <div id="wavepayQR" class="mt-2 text-center"></div>
+                            </div>
+
+                            <!-- Calculated Total -->
+                            <div class="mb-3 p-3 bg-light rounded">
+                                <div class="row text-center">
+                                    <div class="col-6">
+                                        <strong>Subtotal:</strong>
+                                        <div id="subtotalDisplay">$0.00</div>
+                                    </div>
+                                    <div class="col-6">
+                                        <strong>Total:</strong>
+                                        <div id="totalDisplay" class="h5 text-primary">$0.00</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-success btn-lg">
+                                    <i class="fas fa-save"></i> Complete Sale
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary" onclick="clearForm()">
+                                    <i class="fas fa-times"></i> Clear Form
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success Modal -->
+    <div class="modal fade" id="successModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title">Sale Completed!</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
+                    <p class="lead">Transaction has been saved successfully.</p>
+                    <div id="saleSummary"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Continue Selling</button>
+                    <a href="index.html" class="btn btn-primary">Go to Dashboard</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/db.js"></script>
+    <script src="js/sync.js"></script>
+    <script src="js/main.js"></script>
+    <script src="js/wavepay.js"></script>
+
+    <script>
+        // Show/hide WavePay section based on payment type
+        document.getElementById('paymentType').addEventListener('change', function() {
+            const wavepaySection = document.getElementById('wavepaySection');
+            if (this.value === 'wavepay') {
+                wavepaySection.classList.remove('d-none');
+            } else {
+                wavepaySection.classList.add('d-none');
+            }
+        });
+
+        // Calculate totals in real-time
+        function calculateTotals() {
+            const amount = parseFloat(document.getElementById('amount').value) || 0;
+            const quantity = parseInt(document.getElementById('quantity').value) || 0;
+            const subtotal = amount * quantity;
+            
+            document.getElementById('subtotalDisplay').textContent = `$${subtotal.toFixed(2)}`;
+            document.getElementById('totalDisplay').textContent = `$${subtotal.toFixed(2)}`;
+        }
+
+        // Clear form
+        function clearForm() {
+            document.getElementById('saleForm').reset();
+            calculateTotals();
+            document.getElementById('wavepayQR').innerHTML = '';
+        }
+
+        // Form submission
+        document.getElementById('saleForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const transaction = {
+                product_name: document.getElementById('productName').value,
+                amount: parseFloat(document.getElementById('amount').value),
+                quantity: parseInt(document.getElementById('quantity').value),
+                payment_type: document.getElementById('paymentType').value,
+                timestamp: new Date().toISOString(),
+                local_id: 'local_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9)
+            };
+
+            try {
+                await saveTransaction(transaction);
+                
+                // Show success modal with summary
+                const summary = `
+                    <div class="text-start">
+                        <p><strong>Product:</strong> ${transaction.product_name}</p>
+                        <p><strong>Amount:</strong> $${(transaction.amount * transaction.quantity).toFixed(2)}</p>
+                        <p><strong>Payment:</strong> ${transaction.payment_type}</p>
+                    </div>
+                `;
+                document.getElementById('saleSummary').innerHTML = summary;
+                
+                const modal = new bootstrap.Modal(document.getElementById('successModal'));
+                modal.show();
+                
+                // Clear form after successful submission
+                clearForm();
+                
+            } catch (error) {
+                alert('Error saving transaction: ' + error.message);
+            }
+        });
+
+        // Add event listeners for real-time calculation
+        document.getElementById('amount').addEventListener('input', calculateTotals);
+        document.getElementById('quantity').addEventListener('input', calculateTotals);
+
+        // Initialize totals on page load
+        calculateTotals();
+
+        // Pre-fill demo buyer wallet
+        function prefillDemoWallets() {
+            const buyerWalletInput = document.getElementById('buyerWalletId');
+            if (buyerWalletInput) {
+                buyerWalletInput.value = 'WPQ17596411833635632';
+            }
+        }
+
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            prefillDemoWallets();
+            initializeWavePay();
+        });
+
+        async function initializeWavePay() {
+            try {
+                await wavePaySDK.getSellerWallet();
+                console.log('Seller wallet ready:', wavePaySDK.sellerWalletId);
+            } catch (error) {
+                console.error('WavePay initialization failed:', error);
+            }
+        }
+
+        async function generateWavePayQR() {
+            const buyerWalletId = document.getElementById('buyerWalletId').value;
+            const amount = parseFloat(document.getElementById('amount').value) * parseInt(document.getElementById('quantity').value);
+            
+            if (!buyerWalletId) {
+                alert('Please enter buyer wallet ID');
+                return;
+            }
+
+            try {
+                console.log('🚀 Starting WavePay QR Generation...');
+                
+                // Step 1: Test basic backend connection
+                console.log('🔍 Step 1: Testing backend connection...');
+                try {
+                    const testResponse = await fetch('http://localhost:5000/');
+                    console.log('✅ Backend main endpoint:', testResponse.status, testResponse.statusText);
+                    
+                    const testData = await testResponse.json();
+                    console.log('✅ Backend response:', testData);
+                } catch (error) {
+                    console.error('❌ Backend connection failed:', error);
+                    throw new Error('Cannot connect to backend server. Make sure Flask is running on port 5000.');
+                }
+
+                // Step 2: Test WavePay routes
+                console.log('🔍 Step 2: Testing WavePay routes...');
+                try {
+                    const wavepayTest = await fetch('http://localhost:5000/wavepay/test');
+                    console.log('✅ WavePay test endpoint:', wavepayTest.status, wavepayTest.statusText);
+                    
+                    const wavepayData = await wavepayTest.json();
+                    console.log('✅ WavePay test response:', wavepayData);
+                } catch (error) {
+                    console.error('❌ WavePay routes not working:', error);
+                    throw new Error('WavePay endpoints are not available. Check backend routes.');
+                }
+
+                // Step 3: Get seller wallet
+                console.log('🔍 Step 3: Getting seller wallet...');
+                let sellerWalletId;
+                try {
+                    sellerWalletId = await getSellerWalletId();
+                    console.log('✅ Seller Wallet ID:', sellerWalletId);
+                } catch (error) {
+                    console.error('❌ Failed to get seller wallet:', error);
+                    throw new Error('Cannot create seller wallet: ' + error.message);
+                }
+
+                // Step 4: Create transaction
+                console.log('🔍 Step 4: Creating transaction...');
+                console.log('📋 Transaction details:', {
+                    sellerWalletId,
+                    buyerWalletId, 
+                    amount
+                });
+
+                try {
+                    const result = await createWavePayTransaction(sellerWalletId, buyerWalletId, amount);
+                    console.log('✅ Transaction created:', result);
+                    
+                    if (result.success) {
+                        console.log('🎉 QR Code generated successfully!');
+                        console.log('📦 QR Data:', result.qr_data);
+                        displayQRCode(result.qr_data);
+                    } else {
+                        throw new Error(result.error || 'Transaction creation failed');
+                    }
+                } catch (error) {
+                    console.error('❌ Transaction creation failed:', error);
+                    throw new Error('Transaction failed: ' + error.message);
+                }
+                
+            } catch (error) {
+                console.error('💥 FINAL ERROR:', error);
+                alert('❌ Error: ' + error.message + '\n\nCheck browser console for details.');
+            }
+        }
+
+        function displayQRCode(qrData) {
+            const qrDiv = document.getElementById('wavepayQR');
+            
+            try {
+                // Parse the QR data to make it more readable
+                const transactionData = JSON.parse(qrData);
+                
+                qrDiv.innerHTML = `
+                    <div class="card">
+                        <div class="card-header bg-primary text-white">
+                            <h6 class="mb-0"><i class="fas fa-qrcode"></i> WavePay Quantum Transaction</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h6>Transaction Details:</h6>
+                                    <table class="table table-sm">
+                                        <tr><td><strong>ID:</strong></td><td>${transactionData.transaction_id}</td></tr>
+                                        <tr><td><strong>Amount:</strong></td><td>$${transactionData.amount} ${transactionData.currency}</td></tr>
+                                        <tr><td><strong>From:</strong></td><td>${transactionData.sender_wallet_id}</td></tr>
+                                        <tr><td><strong>To:</strong></td><td>${transactionData.receiver_wallet_id}</td></tr>
+                                        <tr><td><strong>Time:</strong></td><td>${new Date(transactionData.timestamp).toLocaleString()}</td></tr>
+                                    </table>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6>QR Data (JSON):</h6>
+                                    <textarea class="form-control" rows="8" readonly>${qrData}</textarea>
+                                </div>
+                            </div>
+                            
+                            <div class="mt-3">
+                                <button class="btn btn-sm btn-outline-secondary" onclick="copyQRData()">
+                                    <i class="fas fa-copy"></i> Copy QR Data
+                                </button>
+                                <button class="btn btn-sm btn-outline-success" onclick="processDemoTransaction()">
+                                    <i class="fas fa-bolt"></i> Process Transaction
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                console.log('✅ QR Code displayed successfully!');
+                
+            } catch (error) {
+                console.error('❌ Error displaying QR code:', error);
+                // Fallback display if JSON parsing fails
+                qrDiv.innerHTML = `
+                    <div class="alert alert-info">
+                        <h6><i class="fas fa-qrcode"></i> WavePay Quantum QR</h6>
+                        <div class="mt-2">
+                            <textarea class="form-control" rows="6" readonly>${qrData}</textarea>
+                        </div>
+                        <div class="mt-2">
+                            <button class="btn btn-sm btn-outline-secondary" onclick="copyQRData()">
+                                <i class="fas fa-copy"></i> Copy QR Data
+                            </button>
+                            <button class="btn btn-sm btn-outline-success" onclick="processDemoTransaction()">
+                                <i class="fas fa-bolt"></i> Process Transaction
+                            </button>
+                        </div>
+                        <small class="text-muted">Buyer should scan this QR code with their WavePay app</small>
+                    </div>
+                `;
+            }
+        }
+
+        function copyQRData() {
+            try {
+                const textarea = document.querySelector('#wavepayQR textarea');
+                if (textarea) {
+                    textarea.select();
+                    document.execCommand('copy');
+                    alert('QR data copied to clipboard!');
+                } else {
+                    alert('No QR data found to copy');
+                }
+            } catch (error) {
+                console.error('Error copying QR data:', error);
+                alert('Error copying QR data');
+            }
+        }
+
+        async function processDemoTransaction() {
+            try {
+                const textarea = document.querySelector('#wavepayQR textarea');
+                if (!textarea) {
+                    alert('No transaction data found');
+                    return;
+                }
+                
+                const qrData = textarea.value;
+                if (!qrData) {
+                    alert('No QR data to process');
+                    return;
+                }
+                
+                const transactionData = JSON.parse(qrData);
+                const result = await processWavePayTransaction(transactionData);
+                
+                if (result.success) {
+                    alert('✅ Transaction processed successfully!\nNew balances:\n' +
+                          `Buyer: $${result.new_balances.sender}\n` +
+                          `Seller: $${result.new_balances.receiver}`);
+                    
+                    // Clear the QR section
+                    document.getElementById('wavepayQR').innerHTML = '';
+                } else {
+                    throw new Error(result.error);
+                }
+            } catch (error) {
+                alert('❌ Error processing transaction: ' + error.message);
+            }
+        }
+    </script>
+</body>
+</html>

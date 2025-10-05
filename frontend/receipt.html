@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generate Receipt - MobilePOS Lite</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="css/style.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-4">
+        <!-- Header -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1><i class="fas fa-receipt text-primary"></i> Generate Receipt</h1>
+            <a href="index.html" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left"></i> Back to Dashboard
+            </a>
+        </div>
+
+        <!-- Transaction Selection -->
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="card-title mb-0">Select Transaction</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label for="transactionSelect" class="form-label">Choose a transaction:</label>
+                            <select class="form-select" id="transactionSelect">
+                                <option value="">Loading transactions...</option>
+                            </select>
+                        </div>
+                        
+                        <div id="transactionDetails" class="d-none">
+                            <h6>Transaction Details:</h6>
+                            <div class="border rounded p-3 bg-light">
+                                <div id="detailsContent"></div>
+                            </div>
+                            
+                            <div class="mt-3">
+                                <button id="generatePdf" class="btn btn-success w-100">
+                                    <i class="fas fa-file-pdf"></i> Generate PDF Receipt
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="card-title mb-0">Receipt Preview</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="receiptPreview" class="receipt">
+                            <div class="receipt-header">
+                                <h4>MobilePOS Lite</h4>
+                                <p>123 Business Street<br>City, State 12345</p>
+                                <p>Tel: (555) 123-4567</p>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <div class="receipt-item">
+                                    <span>Date:</span>
+                                    <span id="previewDate">-</span>
+                                </div>
+                                <div class="receipt-item">
+                                    <span>Time:</span>
+                                    <span id="previewTime">-</span>
+                                </div>
+                                <div class="receipt-item">
+                                    <span>Receipt #:</span>
+                                    <span id="previewId">-</span>
+                                </div>
+                            </div>
+                            
+                            <hr>
+                            
+                            <div class="mb-3">
+                                <div class="receipt-item">
+                                    <strong>Product</strong>
+                                    <strong>Total</strong>
+                                </div>
+                                <div id="previewItems">
+                                    <div class="receipt-item">
+                                        <span>-</span>
+                                        <span>$0.00</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <hr>
+                            
+                            <div class="receipt-total">
+                                <div class="receipt-item">
+                                    <strong>TOTAL:</strong>
+                                    <strong id="previewTotal">$0.00</strong>
+                                </div>
+                            </div>
+                            
+                            <div class="receipt-item">
+                                <span>Payment:</span>
+                                <span id="previewPayment">-</span>
+                            </div>
+                            
+                            <div class="text-center mt-4">
+                                <p>Thank you for your business!</p>
+                                <small>*** RECEIPT ***</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="js/db.js"></script>
+    <script src="js/receipt.js"></script>
+    <script>
+        // Load transactions when page loads
+        document.addEventListener('DOMContentLoaded', async function() {
+            await loadTransactions();
+        });
+
+        async function loadTransactions() {
+            try {
+                const transactions = await getAllTransactions();
+                const select = document.getElementById('transactionSelect');
+                
+                select.innerHTML = '<option value="">Select a transaction...</option>';
+                
+                if (transactions.length === 0) {
+                    select.innerHTML = '<option value="">No transactions found</option>';
+                    return;
+                }
+                
+                transactions.forEach(transaction => {
+                    const date = new Date(transaction.timestamp);
+                    const option = document.createElement('option');
+                    option.value = transaction.local_id;
+                    option.textContent = `${date.toLocaleDateString()} - ${transaction.product_name} - $${(transaction.amount * transaction.quantity).toFixed(2)}`;
+                    select.appendChild(option);
+                });
+                
+                // Add change event listener
+                select.addEventListener('change', function() {
+                    const selectedId = this.value;
+                    if (selectedId) {
+                        const transaction = transactions.find(t => t.local_id === selectedId);
+                        if (transaction) {
+                            showTransactionDetails(transaction);
+                            updateReceiptPreview(transaction);
+                        }
+                    } else {
+                        hideTransactionDetails();
+                    }
+                });
+                
+            } catch (error) {
+                console.error('Error loading transactions:', error);
+                document.getElementById('transactionSelect').innerHTML = '<option value="">Error loading transactions</option>';
+            }
+        }
+
+        function showTransactionDetails(transaction) {
+            const detailsDiv = document.getElementById('transactionDetails');
+            const contentDiv = document.getElementById('detailsContent');
+            
+            const date = new Date(transaction.timestamp);
+            const total = transaction.amount * transaction.quantity;
+            
+            contentDiv.innerHTML = `
+                <p><strong>Product:</strong> ${transaction.product_name}</p>
+                <p><strong>Unit Price:</strong> $${transaction.amount.toFixed(2)}</p>
+                <p><strong>Quantity:</strong> ${transaction.quantity}</p>
+                <p><strong>Total:</strong> $${total.toFixed(2)}</p>
+                <p><strong>Payment Method:</strong> ${transaction.payment_type}</p>
+                <p><strong>Date:</strong> ${date.toLocaleString()}</p>
+                <p><strong>Status:</strong> ${transaction.synced ? 'Synced' : 'Pending Sync'}</p>
+            `;
+            
+            detailsDiv.classList.remove('d-none');
+        }
+
+        function hideTransactionDetails() {
+            document.getElementById('transactionDetails').classList.add('d-none');
+        }
+
+        function updateReceiptPreview(transaction) {
+            const date = new Date(transaction.timestamp);
+            const total = transaction.amount * transaction.quantity;
+            
+            document.getElementById('previewDate').textContent = date.toLocaleDateString();
+            document.getElementById('previewTime').textContent = date.toLocaleTimeString();
+            document.getElementById('previewId').textContent = transaction.local_id.substring(0, 8);
+            
+            document.getElementById('previewItems').innerHTML = `
+                <div class="receipt-item">
+                    <span>${transaction.product_name} x${transaction.quantity}</span>
+                    <span>$${total.toFixed(2)}</span>
+                </div>
+            `;
+            
+            document.getElementById('previewTotal').textContent = `$${total.toFixed(2)}`;
+            document.getElementById('previewPayment').textContent = transaction.payment_type.toUpperCase();
+        }
+
+        // Generate PDF when button is clicked
+        document.getElementById('generatePdf').addEventListener('click', function() {
+            const selectedId = document.getElementById('transactionSelect').value;
+            if (selectedId) {
+                const transactions = getAllTransactions().then(transactions => {
+                    const transaction = transactions.find(t => t.local_id === selectedId);
+                    if (transaction) {
+                        generateReceiptPDF(transaction);
+                    }
+                });
+            } else {
+                alert('Please select a transaction first.');
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MobilePOS Lite - Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="css/style.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container-fluid">
+        <!-- Online/Offline Banner -->
+        <div id="connectionStatus" class="alert alert-warning d-none" role="alert">
+            <i class="fas fa-wifi"></i> You are currently offline. Transactions will be saved locally.
+        </div>
+
+        <!-- Header -->
+        <nav class="navbar navbar-dark bg-primary mb-4">
+            <div class="container-fluid">
+                <span class="navbar-brand mb-0 h1">
+                    <i class="fas fa-cash-register"></i> MobilePOS Lite
+                </span>
+                <div class="navbar-text">
+                    <span id="currentTime" class="badge bg-light text-dark"></span>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Stats Cards -->
+        <div class="row mb-4">
+            <div class="col-md-4">
+                <div class="card text-white bg-success">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h6 class="card-title">Today's Sales</h6>
+                                <h3 id="dailyTotal">$0.00</h3>
+                                <small id="dailyCount">0 transactions</small>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="fas fa-calendar-day fa-2x"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card text-white bg-info">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h6 class="card-title">This Week</h6>
+                                <h3 id="weeklyTotal">$0.00</h3>
+                                <small id="weeklyCount">0 transactions</small>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="fas fa-chart-line fa-2x"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card text-white bg-warning">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h6 class="card-title">Pending Sync</h6>
+                                <h3 id="pendingCount">0</h3>
+                                <small>offline transactions</small>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="fas fa-sync fa-2x"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="d-grid gap-2 d-md-flex justify-content-md-start">
+                    <a href="add.html" class="btn btn-primary btn-lg">
+                        <i class="fas fa-plus"></i> New Sale
+                    </a>
+                    <a href="receipt.html" class="btn btn-outline-secondary btn-lg">
+                        <i class="fas fa-receipt"></i> Generate Receipt
+                    </a>
+                    <button id="syncBtn" class="btn btn-outline-success btn-lg">
+                        <i class="fas fa-sync"></i> Sync Now
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Transactions List -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-list"></i> Recent Transactions
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped" id="transactionsTable">
+                        <thead>
+                            <tr>
+                                <th>Time</th>
+                                <th>Product</th>
+                                <th>Qty</th>
+                                <th>Amount</th>
+                                <th>Payment</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="transactionsBody">
+                            <!-- Transactions will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/db.js"></script>
+    <script src="js/sync.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>
