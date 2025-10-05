@@ -1,9 +1,9 @@
-```markdown
 # MobilePOS Lite
 
 **Tagline:** *Offline-first Point-of-Sale app for street vendors and small merchants.*
 
-A lightweight **POS system** built with **Flask (Python)** for the backend and **vanilla JavaScript + Bootstrap 5** for the frontend. Designed to work **fully offline** with automatic sync when connectivity is restored.
+A lightweight **POS system** built with **Flask (Python)** for the backend and **vanilla JavaScript + Bootstrap 5** for the frontend.
+Designed to work **fully offline** with automatic sync when connectivity is restored.
 
 ---
 
@@ -16,6 +16,22 @@ A lightweight **POS system** built with **Flask (Python)** for the backend and *
 * ✅ **Local Encryption** – Protects data if device is lost
 * ✅ **Service Worker Caching** – Works seamlessly offline (PWA-ready)
 * ✅ **Responsive UI** – Bootstrap 5 for mobile & desktop
+
+---
+
+## 📸 Screenshots
+
+### Dashboard
+
+![Dashboard Screenshot](frontend/images/image1.png)
+
+### New Sale Form
+
+![New Sale Form](frontend/images/image2.png)
+
+### Transaction Flow
+
+![Transaction Flow](frontend/images/image3.png)
 
 ---
 
@@ -65,16 +81,13 @@ python app.py
 ```
 
 The backend runs by default at:
-
-```
-http://127.0.0.1:5000
-```
+👉 [http://127.0.0.1:5000](http://127.0.0.1:5000)
 
 ---
 
 ### 3️⃣ Running the Frontend
 
-In a **separate terminal**:
+In a separate terminal:
 
 ```bash
 cd frontend
@@ -82,10 +95,7 @@ python -m http.server 8000
 ```
 
 Open in browser:
-
-```
-http://127.0.0.1:8000
-```
+👉 [http://127.0.0.1:8000](http://127.0.0.1:8000)
 
 ---
 
@@ -99,22 +109,24 @@ ngrok http 5000   # backend
 ngrok http 8000   # frontend
 ```
 
-Use the ngrok HTTPS URLs on your phone browser. Update `frontend/js/sync.js` with your backend ngrok URL for live testing.
+Use the **ngrok HTTPS URLs** on your phone browser.
+⚡ Update `frontend/js/sync.js` with your backend ngrok URL for live testing.
 
 ---
 
 ## 🎯 Demo: Offline → Online Sync Flow
 
-1. **Start offline** (turn off WiFi)
-2. **Record sales** via "New Sale" page:
-   - Coffee ×2 @ $3.50 = $7.00 (Cash)
-   - Sandwich ×1 @ $8.99 = $8.99 (Card)
-   - Cookie ×3 @ $2.25 = $6.75 (Mobile)
-3. **Check dashboard** – transactions show "Pending" status
-4. **Go online** (turn WiFi back on)
-5. **Watch auto-sync** – transactions automatically upload to backend
-6. **Verify sync** – dashboard updates to "Synced" status
-7. **Generate receipts** – create PDF receipts for any transaction
+1. Start offline (turn off WiFi)
+2. Record sales via "New Sale" page:
+
+   * Coffee ×2 @ $3.50 = $7.00 (Cash)
+   * Sandwich ×1 @ $8.99 = $8.99 (Card)
+   * Cookie ×3 @ $2.25 = $6.75 (Mobile)
+3. Check dashboard – transactions show **Pending** status
+4. Go online (turn WiFi back on)
+5. Watch auto-sync – transactions automatically upload to backend
+6. Verify sync – dashboard updates to **Synced** status
+7. Generate receipts – create PDF receipts for any transaction
 
 ---
 
@@ -143,7 +155,8 @@ mobilepos-lite/
 │   │   ├── sync.js     # Offline/online sync logic
 │   │   └── receipt.js  # PDF generation with jsPDF
 │   ├── service-worker.js # Offline caching
-│   └── manifest.json   # PWA config
+│   ├── manifest.json   # PWA config
+│   └── images/         # App screenshots
 │
 └── README.md
 ```
@@ -152,13 +165,13 @@ mobilepos-lite/
 
 ## 🔌 API Endpoints
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `GET` | `/` | API status check |
-| `POST` | `/add` | Add single or bulk transactions |
-| `GET` | `/transactions` | Get all transactions (with date filters) |
-| `POST` | `/sync` | Bulk sync offline transactions |
-| `GET` | `/stats` | Get daily/weekly sales analytics |
+| Method | Endpoint        | Description                              |
+| ------ | --------------- | ---------------------------------------- |
+| GET    | `/`             | API status check                         |
+| POST   | `/add`          | Add single or bulk transactions          |
+| GET    | `/transactions` | Get all transactions (with date filters) |
+| POST   | `/sync`         | Bulk sync offline transactions           |
+| GET    | `/stats`        | Get daily/weekly sales analytics         |
 
 ---
 
@@ -175,54 +188,72 @@ mobilepos-lite/
 
 ## 🔮 Roadmap
 
-* [ ] Add multi-user login (JWT)
-* [ ] Add inventory management
-* [ ] Add CSV/Excel export
-* [ ] Add cloud sync (Supabase / Firebase)
-* [ ] Optional crypto payments (USDC/Solana)
-* [ ] Barcode scanning support
-* [ ] Multi-currency support
-* [ ] Advanced reporting & analytics
+*  [ ] Multi-user login (JWT)
+*  [ ] Inventory management
+*  [ ] CSV/Excel export
+*  [ ] Cloud sync (Supabase / Firebase)
+*  [ ] Optional crypto payments (USDC/Solana)
+*  [ ] Barcode scanning support
+*  [ ] Multi-currency support
+*  [ ] Advanced reporting & analytics
 
 ---
 
 ## 🐛 Troubleshooting
 
-**Backend won't start:**
-- Ensure you're in the virtual environment: `source venv/bin/activate`
-- Check all dependencies: `pip install -r requirements.txt`
-- Port 5000 might be busy: `python app.py --port 5001`
+**Backend won’t start**
 
-**Frontend sync issues:**
-- Verify backend is running on port 5000
-- Check browser console for CORS errors
-- Update API_BASE in `frontend/js/sync.js` if using ngrok
+* Ensure you’re in the virtual environment: `source venv/bin/activate`
+* Check dependencies: `pip install -r requirements.txt`
+* Port 5000 might be busy: `python app.py --port 5001`
 
-**Offline functionality not working:**
-- Ensure Service Worker is registered (check Application tab in DevTools)
-- Verify browser supports IndexedDB
+**Frontend sync issues**
+
+* Verify backend is running on port 5000
+* Check browser console for CORS errors
+* Update `API_BASE` in `frontend/js/sync.js` if using ngrok
+
+**Offline functionality not working**
+
+* Ensure Service Worker is registered (DevTools → Application tab)
+* Verify browser supports IndexedDB
 
 ---
 
 ## 🤝 Contributing
 
 1. Fork the repository
-2. Create a feature branch: `git checkout -b feature/amazing-feature`
-3. Commit your changes: `git commit -m 'Add amazing feature'`
-4. Push to the branch: `git push origin feature/amazing-feature`
+
+2. Create a feature branch:
+
+   ```bash
+   git checkout -b feature/amazing-feature
+   ```
+
+3. Commit changes:
+
+   ```bash
+   git commit -m 'Add amazing feature'
+   ```
+
+4. Push to branch:
+
+   ```bash
+   git push origin feature/amazing-feature
+   ```
+
 5. Open a Pull Request
 
 ---
 
 ## 📜 License
 
-MIT License © 2025 MobilePOS Lite Contributors
+MIT License © 2025 **MobilePOS Lite Contributors**
 
 ---
 
 ## 🙏 Acknowledgments
 
-* Bootstrap 5 for the responsive UI components
-* jsPDF for client-side PDF generation
-* Flask community for the lightweight backend framework
-```
+* [Bootstrap 5](https://getbootstrap.com) – Responsive UI components
+* [jsPDF](https://github.com/parallax/jsPDF) – Client-side PDF generation
+* [Flask](https://flask.palletsprojects.com) – Lightweight backend framework
